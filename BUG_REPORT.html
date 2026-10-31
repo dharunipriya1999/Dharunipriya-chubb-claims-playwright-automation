@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo App QA Bug Report</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --line: #dfe7f1;
+      --accent: #2563eb;
+      --warning: #a16207;
+      --danger: #b91c1c;
+      --success: #166534;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+    .meta {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 28px;
+    }
+    .meta ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      padding: 24px 24px 12px;
+      margin-bottom: 28px;
+    }
+    .issue {
+      border-left: 5px solid var(--accent);
+      padding-left: 16px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+    }
+    .severity-high { background: #fff4d6; color: var(--warning); }
+    .severity-medium { background: #e0f2fe; color: #0f4c81; }
+    .severity-low { background: #e8f5e9; color: var(--success); }
+    .screenshot-wrap {
+      margin: 18px 0 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .caption {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f6fa;
+    }
+    ul, ol { padding-left: 22px; }
+    .summary-box {
+      background: #eef4ff;
+      border-left: 5px solid var(--accent);
+      padding: 14px 18px;
+      margin: 18px 0 22px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Demo App QA Bug Report</h1>
+
+    <div class="meta">
+      <ul>
+        <li><strong>Date:</strong> 2026-10-30</li>
+        <li><strong>Environment:</strong> Local browser testing at http://localhost:3001</li>
+        <li><strong>Users tested:</strong> admin@demo.com / Admin123!, claimant@demo.com / Claimant123!</li>
+        <li><strong>Pages reviewed:</strong> Login, Admin Dashboard, Admin Claims, Claimant Claims</li>
+      </ul>
+    </div>
+
+    <div class="summary-box">
+      The application loads correctly and login works, but the claims pages and live-update behavior are not consistently reliable. The most significant issue is that the app can present stale or empty claim data while still appearing healthy, which reduces user confidence and may cause missed follow-up actions.
+    </div>
+
+    <div class="panel">
+      <h2>Summary of Findings</h2>
+      <div class="issue">
+        <div class="badge severity-high">HIGH</div>
+        <h3>1) Real-time connection state is unreliable</h3>
+        <p>The app shows a connection badge that flips to “Offline” or “Reconnecting…” even while the page is otherwise live. This makes the app look unstable and can hide the real state of the live data feed.</p>
+        <p><strong>Impact:</strong> Users may not know whether the screen is current, stale, or disconnected.</p>
+      </div>
+
+      <div class="issue">
+        <div class="badge severity-high">HIGH</div>
+        <h3>2) Claims pages can look empty despite the system being active</h3>
+        <p>In the admin claims view, the UI can display “0 claims” and “No claims found” even while the application is running normally. This can look like a data loss issue when it is actually a UI/data refresh problem.</p>
+        <p><strong>Impact:</strong> Admin users may wrongly conclude there are no claims in the system.</p>
+      </div>
+
+      <div class="issue">
+        <div class="badge severity-medium">MEDIUM</div>
+        <h3>3) Incoming live-update payloads are not strongly validated</h3>
+        <p>The app handles WebSocket status messages by casting values without robust validation. If unexpected values arrive, the UI can update incorrectly.</p>
+        <p><strong>Impact:</strong> Wrong or malformed statuses may be displayed in the interface.</p>
+      </div>
+
+      <div class="issue">
+        <div class="badge severity-medium">MEDIUM</div>
+        <h3>4) Timeout/state cleanup can accumulate over time</h3>
+        <p>Updated-claim highlight timers are tracked but not always cleaned up reliably. Repeated changes can leave stale timers behind and degrade responsiveness.</p>
+        <p><strong>Impact:</strong> Slower UI behavior and potential memory growth over long sessions.</p>
+      </div>
+
+      <div class="issue">
+        <div class="badge severity-low">LOW</div>
+        <h3>5) Failed background refreshes are silently ignored</h3>
+        <p>When the app tries to refresh data after a real-time event, some failed API calls are only logged in the console, not surfaced to the user.</p>
+        <p><strong>Impact:</strong> Users are left with stale data and no explanation.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Live Screenshots</h2>
+
+      <div class="screenshot-wrap">
+        <img src="./claimant-claims-empty.png" alt="Claimant claims page showing an empty claims state" />
+        <div class="caption">Claimant view: the page shows “No claims yet” and the app still reports “Live”. This is a valid user-facing state in a clean environment, but it also highlights that empty-state logic is visible even without user activity.</div>
+      </div>
+
+      <div class="screenshot-wrap">
+        <img src="./admin-claims-empty.png" alt="Admin claims page showing zero claims and empty state" />
+        <div class="caption">Admin claims view: the page reports “0 claims” and “No claims found”. This is a key concern because it can be interpreted as a data issue rather than a valid empty state.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Detailed Findings</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Issue</th>
+            <th>Evidence</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Connection status is inconsistent</td>
+            <td>The UI shows a live indicator in the header while the claims page can still show unstable or stale behavior.</td>
+            <td>Users do not know whether data is fresh or delayed.</td>
+          </tr>
+          <tr>
+            <td>Claims page can show empty results without explanation</td>
+            <td>Admin claims page reported “0 claims” and “No claims found”.</td>
+            <td>Users may believe there are no claims in the system or that the page failed.</td>
+          </tr>
+          <tr>
+            <td>Live payload validation is weak</td>
+            <td>WebSocket messages are accepted and cast with minimal validation.</td>
+            <td>Unexpected status values can affect displayed claim state.</td>
+          </tr>
+          <tr>
+            <td>Timer cleanup is risky</td>
+            <td>Highlight timeouts are tracked in a state store but can accumulate over time.</td>
+            <td>Long sessions can become slower and less stable.</td>
+          </tr>
+          <tr>
+            <td>Background failure handling is poor</td>
+            <td>Refresh failures are only logged to the console.</td>
+            <td>Users may be left with stale screens without a warning.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Reproduction Steps</h2>
+      <ol>
+        <li>Open http://localhost:3001/login</li>
+        <li>Log in as admin@demo.com / Admin123!</li>
+        <li>Navigate to /admin/claims</li>
+        <li>Observe the count and empty-state messaging</li>
+        <li>Check whether the connection status stays in sync with the live data</li>
+        <li>Trigger or monitor a claim status update and verify whether the UI refreshes correctly</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2>Recommended Next Actions</h2>
+      <ul>
+        <li>Stabilize the WebSocket reconnect lifecycle and ensure the UI reflects real connection health.</li>
+        <li>Validate claim status payloads before updating state.</li>
+        <li>Ensure empty states are clearly differentiated from actual data-loading failures.</li>
+        <li>Fix timeout cleanup and stale-state handling for claim highlights.</li>
+        <li>Surface backend refresh failures with visible user notifications.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>Conclusion</h2>
+      <p>The main issue is not a broken login flow or complete app crash. The app is mostly functional, but the user experience is not consistently trustworthy because claim data, live state, and connection health can be misleading. This is a correctness and confidence problem, not just a cosmetic one.</p>
+    </div>
+  </div>
+</body>
+</html>
