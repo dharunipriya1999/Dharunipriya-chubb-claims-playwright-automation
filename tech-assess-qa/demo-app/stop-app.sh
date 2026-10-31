@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-echo "==> Stopping application services..."
-docker compose -f "$SCRIPT_DIR/docker-compose.apps.yml" down "$@"
